@@ -6,10 +6,12 @@ This is based on the [Washington Post](https://www.washingtonpost.com/graphics/2
 # Prerequisites
 This depends on the following modules obtainable from `pip`:
 ```
-matplotlib
-numpy
-imageio
+matplotlib 
+numpy 
+imageio 
 imageio-ffmpeg
 ```
 
 # Example output
+<img src="model0.0.gif " width="200">
+<img src="model0.5.gif " width="200">
