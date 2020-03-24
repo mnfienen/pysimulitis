@@ -1,0 +1,10 @@
+name: runner
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - numpy
+  - matplotlib
+  - imageio
+  - pip:
+    - imageio_ffmpeg
