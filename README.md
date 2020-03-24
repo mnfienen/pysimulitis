@@ -13,7 +13,7 @@ imageio-ffmpeg
 ```
 
 # or run in binder
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mnfienen/pysimulitis/master)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mnfienen/pysimulitis/master?urlpath=lab)
 
 # Example output
 <img src="model0.0.gif " width="200"><img src="model0.5.gif " width="200">
