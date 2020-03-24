@@ -15,3 +15,7 @@ imageio-ffmpeg
 # Example output
 <img src="model0.0.gif " width="200">
 <img src="model0.5.gif " width="200">
+
+# Keep in touch
+Pull requests and suggestions welcome!
+
