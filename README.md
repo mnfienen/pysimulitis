@@ -16,4 +16,4 @@ imageio-ffmpeg
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mnfienen/pysimulitis/master)
 
 # Example output
-<img src="model0.0.gif " width="200"><img src="model0.5.gif " width="200">
+<img src="model0.0.gif " width="200"><img src="model0.5.gif " width="200"><img src="model0.75.gif " width="200">
