@@ -55,8 +55,10 @@ class agent(Object):
 		self.dead = 0
 		self.t_rec = np.ceil(self.t_recovery  + np.random.normal(loc=0, scale=4, size=1)) / self.delT
 
-	def move(self, iteration, th):
-		v = [self.speed * np.cos(th), self.speed * np.sin(th)]
+	def move(self, iteration, th, v=None):
+		# option to either provide th or v
+		if v is None:
+			v = [self.speed * np.cos(th), self.speed * np.sin(th)]
 		self.pos[iteration,:] = self.pos[iteration-1,:] + v
 
 class population(Object):
@@ -71,23 +73,24 @@ class population(Object):
 		self.peeps = [agent(lim, n_delay, iso, rad, speed, t_recovery,
 	    				p_trans, p_mort, p_init, t_tot, delT) for i in n]
 
-	def increment_time(self):
+	def increment_time(self, citer):
 
 		# deal with collisions and transmission
 
 		# update velocity and directions
 
 		# move each agent
-		for ct in range(np.int(self.t_tot/self.delT)):
-			[i.move() for i in self.peeps]
+		for i,cp in enumerate(self.peeps):
+			cp.move(citer, th[i])
 
 
 pop = population(n=200, lim=200, n_delay = 10, iso = 0.5, rad = 2.5, speed = 10, t_recovery = 14,
 	p_trans = 0.99, p_mort =0.02, p_init = 0.015, t_tot = 70, delT = 0.5)
 
-pop.increment_time()
 
-for i in pop.t_tot
+for citer in range(np.int(self.t_tot/self.delT)):
+	pop.increment_time(citer)
+
 '''
 def run_simulation(n = 200, , make_gif=True, make_mp4=True):
 
