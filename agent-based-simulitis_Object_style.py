@@ -29,7 +29,7 @@ import imageio_ffmpeg
 class agent(Object):
 
 	def __init__(self, lim=200, n_delay = 10, iso = 0.5, rad = 2.5, speed = 10, t_recovery = 14,
-	p_trans = 0.99, p_mort =0.02, p_init = 0.015, t_tot = 70, delT = 0.5):
+	p_trans = 0.99, p_mort =0.02, p_init = 0.015, t_tot = 70, delT = 0.5, agent_idx = 0):
 		# read in parameters
 		self.rad = rad
 		self.speed = speed
@@ -42,24 +42,56 @@ class agent(Object):
 		self.t_tot  t_tot
 		self.delT = delT
 		self.ndelay = n_delay
+		self.agent_idx = agent_idx # index of which agent you are in the list of all agents - for collisions
 
 		# initialize some states for location
-		self.pos = np.zeros((self.t_tot * self.delT,2))
-		self.pos[0,:] = np.random.random(2) * self.lim
-
-		# initialize some states for health
 		self.isolate = np.random.random() < self.iso
-		self.infected = np.random.random()<self.p_init
+		self.pos = np.zeros((self.t_tot * self.delT,2))
+		self.th = np.random.random()*2*np.pi
+		if not self.isolate:
+			self.v = [self.speed * np.cos(th), self.speed * np.sin(th)]
+			self.pos[0, :] = np.random.random(2) * self.lim
+		else:
+			self.v = [0,0]
+		# initialize some states for health
+		self.infected = np.random.random() < self.p_init
 		self.healthy = ~self.infected
 		self.recovered = 0
 		self.dead = 0
+		self.p_death = np.random.random() < self.p_mort
 		self.t_rec = np.ceil(self.t_recovery  + np.random.normal(loc=0, scale=4, size=1)) / self.delT
 
-	def move(self, iteration, th, v=None):
+	def move(self, iteration, th=None, v=None):
+		# first move ....
+
 		# option to either provide th or v
-		if v is None:
-			v = [self.speed * np.cos(th), self.speed * np.sin(th)]
+		# if no v was provided, check for theta
+		if self.v is not [0,0]:
+			if self.v is None:
+				# if also no theta provided, assume velocity is unchanged from last time step and carry on
+				if th is not None:
+					self.v = [self.speed * np.cos(th), self.speed * np.sin(th)]
 		self.pos[iteration,:] = self.pos[iteration-1,:] + v
+
+		# next health increment ...
+		# first, if infected and recovery time is up, either recover of decease
+		if self.infected and self.t_rec <= 0:
+			self.infected = 0
+			self.healthy = 0
+			if self.p_death:
+				self.v=[0,0]
+				self.dead = 1
+				self.recovered = 0
+			else:
+				self.dead = 0
+				self.recovered = 1
+
+		elif self.infected:
+			# one day closer to recovery
+			self.t_rec -= 1
+
+		def interact(self, allpos):
+			# now interact with all the others
 
 class population(Object):
 	def __init__(self, n=200, lim=200, n_delay = 10, iso = 0.5, rad = 2.5, speed = 10, t_recovery = 14,
@@ -75,13 +107,14 @@ class population(Object):
 
 	def increment_time(self, citer):
 
-		# deal with collisions and transmission
-
-		# update velocity and directions
-
-		# move each agent
+		# move all
 		for i,cp in enumerate(self.peeps):
 			cp.move(citer, th[i])
+		# interact
+
+		# report out
+
+
 
 
 pop = population(n=200, lim=200, n_delay = 10, iso = 0.5, rad = 2.5, speed = 10, t_recovery = 14,
