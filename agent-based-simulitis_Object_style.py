@@ -55,8 +55,7 @@ class agent(Object):
 		self.dead = 0
 		self.t_rec = np.ceil(self.t_recovery  + np.random.normal(loc=0, scale=4, size=1)) / self.delT
 
-	def move(self, iteration):
-		th = np.random.random() * 2 * np.pi
+	def move(self, iteration, th):
 		v = [self.speed * np.cos(th), self.speed * np.sin(th)]
 		self.pos[iteration,:] = self.pos[iteration-1,:] + v
 
@@ -73,6 +72,12 @@ class population(Object):
 	    				p_trans, p_mort, p_init, t_tot, delT) for i in n]
 
 	def increment_time(self):
+
+		# deal with collisions and transmission
+
+		# update velocity and directions
+
+		# move each agent
 		for ct in range(np.int(self.t_tot/self.delT)):
 			[i.move() for i in self.peeps]
 
