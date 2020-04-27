@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os,shutil
 import imageio
-import multiprocessing as mp
 
 
 
@@ -260,7 +259,7 @@ def run_simulation(lim= 200,n = 200,rad = 2.5, speed = 10, iso =  0.5, t_tot = 7
         ax[1].set_xlabel('Days')
         ax[1].set_label('Percent of population')
         plt.legend(['recovered', 'healthy','infected','dead'])
-        plt.savefig('figures/fig{0}{}.png'.format(i,iso))
+        plt.savefig('figures/fig{0}.png'.format(i))
         
         #print(inf_sum[i]+dead_sum[i]+hea_sum[i]+rec_sum[i])
         plt.close('all')
@@ -269,13 +268,13 @@ def run_simulation(lim= 200,n = 200,rad = 2.5, speed = 10, iso =  0.5, t_tot = 7
 
 
     if make_gif:
-        frames_path = 'figures/fig{}{}.png'.format(i,iso)
+        frames_path = 'figures/fig{i}.png'
         with imageio.get_writer('model{}.gif'.format(iso), mode='I') as writer:
             for i in range(np.int(t_tot/delT)):
                 writer.append_data(imageio.imread(frames_path.format(i=i)))
 
     if make_mp4:
-        frames_path = 'figures/fig{}{}.png'.format(i,iso)
+        frames_path = 'figures/fig{i}.png'
         with imageio.get_writer('model{}.mp4'.format(iso), mode='I') as writer:
             for i in range(np.int(t_tot/delT)):
                 writer.append_data(imageio.imread(frames_path.format(i=i)))
@@ -284,18 +283,6 @@ def run_simulation(lim= 200,n = 200,rad = 2.5, speed = 10, iso =  0.5, t_tot = 7
 
 if __name__ == '__main__':
     # sweep a few isolation values
-	procs = []
-	lock=mp.Lock()
-	with mp.Manager() as manager:
-		iso = manager.list()
-		t_tot = manager.list()
-		for i,ciso in enumerate([0.0,0.5, 0.75]):
-			iso.append(ciso)
-			t_tot.append(90)
+    for ciso in [0.0, 0.5, 0.75]:
+        run_simulation(iso=ciso, t_tot=100)
 
-		for i in range(2):
-			p = mp.Process(target=run_simulation, kwargs = {'iso':iso,'t_tot':t_tot, 'lock':lock})
-			p.start()
-			procs.append(p)
-		for cp in procs:
-			cp.join()
