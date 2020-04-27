@@ -177,7 +177,7 @@ def run_simulation(lim= 200,n = 200,rad = 2.5, speed = 10, iso =  0.5, t_tot = 7
                             # If either is recovered, no transmission
                             if recovered[k]:
                                 infected[k]=0
-                            elif recovered[k]:
+                            elif recovered[j]:
                                 infected[j]=0
                                 
                             # Otherwise, transmit virus
