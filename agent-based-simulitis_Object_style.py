@@ -39,7 +39,7 @@ class agent(Object):
 		self.lim = lim
 		self.iso = iso
 		self.p_init = p_init
-		self.t_tot  t_tot
+		self.t_tot  = t_tot
 		self.delT = delT
 		self.ndelay = n_delay
 		self.agent_idx = agent_idx # index of which agent you are in the list of all agents - for collisions
@@ -61,7 +61,7 @@ class agent(Object):
 		self.p_death = np.random.random() < self.p_mort
 		self.t_rec = np.ceil(self.t_recovery  + np.random.normal(loc=0, scale=4, size=1)) / self.delT
 
-	def move(self, iteration, th=None, v=None):
+	def move(self, iteration, th=None, v=None, delT=None):
 		# first move ....
 
 		# option to either provide th or v
@@ -71,7 +71,7 @@ class agent(Object):
 				# if also no theta provided, assume velocity is unchanged from last time step and carry on
 				if th is not None:
 					self.v = [self.speed * np.cos(th), self.speed * np.sin(th)]
-		self.pos[iteration,:] = self.pos[iteration-1,:] + v
+		self.pos[iteration,:] = self.pos[iteration-1,:] + v*(~self.isolate)*delT
 
 		# next health increment ...
 		# first, if infected and recovery time is up, either recover of decease
@@ -90,8 +90,6 @@ class agent(Object):
 			# one day closer to recovery
 			self.t_rec -= 1
 
-		def interact(self, allpos):
-			# now interact with all the others
 
 class population(Object):
 	def __init__(self, n=200, lim=200, n_delay = 10, iso = 0.5, rad = 2.5, speed = 10, t_recovery = 14,
@@ -101,18 +99,146 @@ class population(Object):
 		self.n_delay = n_delay
 		self.t_tot = t_tot
 		self.delT  = delT
+		self.rad = rad
+
 		# initially just pass through all the parameters. Could randomize some here
 		self.peeps = [agent(lim, n_delay, iso, rad, speed, t_recovery,
-	    				p_trans, p_mort, p_init, t_tot, delT) for i in n]
+						p_trans, p_mort, p_init, t_tot, delT) for i in n]
+
+		self.collision = np.zeros((n,n))
+
 
 	def increment_time(self, citer):
 
-		# move all
-		for i,cp in enumerate(self.peeps):
-			cp.move(citer, th[i])
-		# interact
+		self.collision -= np.ones((self.n,self.n))
+		self.collision[self.collision<0] = 0
 
-		# report out
+		# move all
+		for i, cp in enumerate(self.peeps):
+			cp.move(citer, th[i], delT = self.delT)
+		# interact
+		# gotta loop over each agent related to each other
+		for k in range(self.n):
+			for j in range(self.n):
+
+				# but don't interact agent with itself
+				if j != k:
+					pos0 = self.peeps[j].pos[citer-1, :]
+					pos1 = self.peeps[k].pos[citer-1, :]
+
+					# If collision between two living specimens, re-calcuate
+					# direction and transmit virus (but don't check the same
+					# two carriers twice)
+					if (np.linalg.norm(pos0 - pos1) <= (2 * self.rad)) and \
+							(1 - self.collision[k, j]) and \
+							(1 - self.collision[j, k]):
+								# Create collision delay (i.e. if carrier j and k have
+								# recently collided, don't recompute collisions for a
+								# n_delay time steps in case they're still close in proximity,
+								# otherwise they might just keep orbiting eachother)
+								self.collision[k, j] = n_delay
+								self.collision[j, k] = n_delay
+
+
+								# Compute New Velocities
+								phi = np.arctan2((pos1[1] - pos0[1]), (pos1[0] - pos0[0]))
+
+								# if one carrier is isolated, treat it like a wall and
+								# bounce the other carrier off it
+								if self.peeps[j].isolate or self.peeps[j].dead:
+									# Get normal direction vector of 'virtual wall'
+									phi_wall = -phi + np.pi / 2
+									n_wall = [np.sin(phi_wall), np.cos(phi_wall)]
+									dot = self.peeps[k].v.dot(np.array(n_wall).T)
+
+									# Redirect non-isolated carrier
+									self.peeps[k].v[0] -= 2 * dot * n_wall[0]
+									self.peeps[k].v[1] -= 2 * dot * n_wall[1]
+									self.peeps[j].v[0] = 0
+									self.peeps[j].v[1] = 0
+
+								elif self.peeps[k].isolate or self.peeps[k].dead:
+									# Get normal direction vector of 'virtual wall'
+										phi_wall = -phi + np.pi / 2
+									n_wall = [np.sin(phi_wall), np.cos(phi_wall)]
+									dot = self.peeps[j].v.dot(np.array(n_wall).T)
+
+									# Redirect non-isolated carrier
+									self.peeps[j].v[0] -= 2 * dot * n_wall[0]
+									self.peeps[j].v[1] -= 2 * dot * n_wall[1]
+									self.peeps[k].v[0] = 0
+									self.peeps[k].v[1] = 0
+
+									# Otherwise, transfer momentum between carriers
+								else:
+									# Get velocity magnitudes
+									v0_mag = np.sqrt(self.peeps[k].v[0] ** 2 + self.peeps[k].v[1] ** 2)
+									v1_mag = np.sqrt(self.peeps[j].v[0] ** 2 + self.peeps[j].v[1] ** 2)
+
+									# Get directions
+									th0 = np.arctan2(self.peeps[k].v[1], self.peeps[k].v[0])
+									th1 = np.arctan2(self.peeps[j].v[1], self.peeps[j].v[0])
+
+									# Compute new velocities
+									self.peeps[k].v[0] = v1_mag * np.cos(th1 - phi) * np.cos(phi) + v0_mag * np.sin(
+										th0 - phi) * np.cos(phi + np.pi / 2)
+									self.peeps[k].v[1] = v1_mag * np.cos(th1 - phi) * np.sin(phi) + v0_mag * np.sin(
+										th0 - phi) * np.sin(phi + np.pi / 2)
+									self.peeps[j].v[0] = v0_mag * np.cos(th0 - phi) * np.cos(phi) + v1_mag * np.sin(
+										th1 - phi) * np.cos(phi + np.pi / 2)
+									self.peeps[j].v[1] = v0_mag * np.cos(th0 - phi) * np.sin(phi) + v1_mag * np.sin(
+										th1 - phi) * np.sin(phi + np.pi / 2)
+
+
+								# If either is infected and not dead...
+								if (self.peeps[j].infected or self.peeps[k].infected) and \
+									((1 - self.peeps[k].dead) or (1 - self.peeps[j].dead)):
+
+
+									# If either is recovered, no transmission
+									if self.peeps[k].recovered:
+										self.peeps[k].infected = 0
+									elif self.peeps[j].recovered:
+										self.peeps[j].infected = 0
+
+									# Otherwise, transmit virus
+									else:
+										transmission = np.random.random(1)[0] < self.p_trans
+										if transmission:
+											self.peeps[j].infected = 1
+											self.peeps[k].infected = 1
+											self.peeps[j].healthy = 0
+											self.peeps[k].healthy = 0
+
+
+			# Look for collisions with walls and re-direct
+
+			# Left Wall
+			if self.peeps[k].pos[citer, 0] <= self.rad:
+				if self.peeps[k].pos[citer, 0] < 0:
+					self.peeps[k].v[0] *= -1
+
+			# Right wall
+			elif self.peeps[k].pos[citer, 0]  >= self.lim - self.rad:
+				if self.peeps[k].pos[citer, 0] > 0:
+					self.peeps[k].v[0] *= -1
+
+			# Bottom Wall
+			if self.peeps[k].pos[citer, 1] <= self.rad:
+				if self.peeps[k].pos[citer, 1] < 0:
+					self.peeps[k].v[1] *= -1
+
+			# Top Wall
+			elif self.peeps[k].pos[citer, 1]  >= self.lim - self.rad:
+				if self.peeps[k].pos[citer, 1 > 0:
+					self.peeps[k].v[1] *= -1
+
+
+
+
+
+
+# report out
 
 
 
