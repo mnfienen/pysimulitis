@@ -159,7 +159,7 @@ class population(Object):
 
 								elif self.peeps[k].isolate or self.peeps[k].dead:
 									# Get normal direction vector of 'virtual wall'
-										phi_wall = -phi + np.pi / 2
+									phi_wall = -phi + np.pi / 2
 									n_wall = [np.sin(phi_wall), np.cos(phi_wall)]
 									dot = self.peeps[j].v.dot(np.array(n_wall).T)
 
@@ -211,27 +211,27 @@ class population(Object):
 											self.peeps[k].healthy = 0
 
 
-			# Look for collisions with walls and re-direct
+		# Look for collisions with walls and re-direct
 
-			# Left Wall
-			if self.peeps[k].pos[citer, 0] <= self.rad:
-				if self.peeps[k].pos[citer, 0] < 0:
-					self.peeps[k].v[0] *= -1
+		# Left Wall
+		if self.peeps[k].pos[citer, 0] <= self.rad:
+			if self.peeps[k].pos[citer, 0] < 0:
+				self.peeps[k].v[0] *= -1
 
-			# Right wall
-			elif self.peeps[k].pos[citer, 0]  >= self.lim - self.rad:
-				if self.peeps[k].pos[citer, 0] > 0:
-					self.peeps[k].v[0] *= -1
+		# Right wall
+		elif self.peeps[k].pos[citer, 0]  >= self.lim - self.rad:
+			if self.peeps[k].pos[citer, 0] > 0:
+				self.peeps[k].v[0] *= -1
 
-			# Bottom Wall
-			if self.peeps[k].pos[citer, 1] <= self.rad:
-				if self.peeps[k].pos[citer, 1] < 0:
-					self.peeps[k].v[1] *= -1
+		# Bottom Wall
+		if self.peeps[k].pos[citer, 1] <= self.rad:
+			if self.peeps[k].pos[citer, 1] < 0:
+				self.peeps[k].v[1] *= -1
 
-			# Top Wall
-			elif self.peeps[k].pos[citer, 1]  >= self.lim - self.rad:
-				if self.peeps[k].pos[citer, 1 > 0:
-					self.peeps[k].v[1] *= -1
+		# Top Wall
+		elif self.peeps[k].pos[citer, 1]  >= self.lim - self.rad:
+			if self.peeps[k].pos[citer, 1 > 0:
+				self.peeps[k].v[1] *= -1
 
 
 
@@ -249,6 +249,8 @@ pop = population(n=200, lim=200, n_delay = 10, iso = 0.5, rad = 2.5, speed = 10,
 
 for citer in range(np.int(self.t_tot/self.delT)):
 	pop.increment_time(citer)
+
+
 
 '''
 def run_simulation(n = 200, , make_gif=True, make_mp4=True):
